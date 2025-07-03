@@ -4,7 +4,7 @@
 A USB-powered stopwatch + countdown timer designed for darkroom and general timing tasks.  
 Features a clear LED display, tactile button interface, audible feedback, and ultra-low sleep mode.
 
-![Assembled Darkroom Timer](images/darkroom_timers.jpg)
+![Assembled Darkroom Timer](images/darkroom_timer_front.jpg)
 
 ---
 
@@ -14,7 +14,7 @@ Features a clear LED display, tactile button interface, audible feedback, and ul
 - Long-press and chord-based controls
 - Sleep mode with wake-on-button
 - Audible ticks and alarm tones
-- USB-C PD power (via external module)
+- Powered by any USB-C charger using an external 5V trigger module
 - Clean UV-resin bezel, red optical gel
 
 ---
@@ -50,11 +50,11 @@ Features a clear LED display, tactile button interface, audible feedback, and ul
 | D6          | TM1637 CLK   | 4-digit display clock                              |
 | D7          | TM1637 DIO   | 4-digit display data                               |
 
+\* Pins D2 and D3 are used for sleep wake interrupts INT0 and INT1
+
 - Buttons are connected to GND and use `INPUT_PULLUP`
 - Buzzer connects to D5 and GND
 - Display uses TM1637 2-wire serial
-
-* Pins D2 and D3 are used for sleep wake interrupts INT0 and INT1
 
 ---
 
