@@ -1,6 +1,9 @@
+
 # Parts List for Darkroom Timer Project
 
 This project uses commonly available components to build a USB-powered stopwatch-style darkroom timer with a 4-digit LED display, audible tick, and a 3-button interface.
+
+---
 
 ## Core Components
 
@@ -11,6 +14,8 @@ This project uses commonly available components to build a USB-powered stopwatch
 - **Momentary Push Buttons (x3)** — 19mm metal, SPST, momentary action, screw terminal (Red, Green, Black)
 - **USB-C Power Trigger Module** — Adjustable 5V output from USB-C PD supply (e.g., AITRIP 5A PD trigger)
 
+---
+
 ## Mounting and Wiring
 
 - **M3 Screws (x4)** — Used to assemble the case
@@ -18,16 +23,33 @@ This project uses commonly available components to build a USB-powered stopwatch
 - **Adhesive Cork Sheet** — 1mm thick, applied to base for grip and surface protection
 - **Wiring** — Flexible stranded hookup wire; connectors are up to builder preference
 
+---
+
 ## Optical Component
 
-- **Red Lighting Gel Filter** — 8.5" x 11" transparent red correction gel for safelight compatibility
+- **Red Lighting Gel Filter** — 8.5" x 11" transparent red correction gel for safelight compatibility  
   - Example: *Transparent Color Red Correction Lighting Gel Filter 8.5 x 11-Inches Red Gel Light Filter Plastic Film Sheets*
 
-## Notes
+---
 
-- Battery operation is not supported or included
-- STL files and FreeCAD source are available in the `3D/` directory
-- Arduino sketch is located in `Arduino/darkroom_timer/darkroom_timer.ino`
+## Adhesives and Assembly Aids
 
-For assembly, wiring diagrams, and case design references, see the `README.md`.
+- **Hot Glue** — Used to secure internal components (Nano, display, USB-C module) to the case interior  
+  - Easily released with a spray of isopropyl alcohol (IPA)
+- **Bondic UV Resin Kit** — Used to affix the bezel cleanly without fogging or warping the red gel  
+  - UV-accessible groove in the bezel makes this straightforward
 
+---
+
+## STL and Source Files
+
+- FreeCAD source and STL files are located in the `3D/` directory  
+  - Bezel: `darkroom-timer-Bezel.stl` (stepped design for UV resin)
+  - Top/Bottom Case: `darkroom-timer-Case Top.stl`, `darkroom-timer-Case Bottom.stl`
+- Arduino sketches are located in the `Arduino/` directory  
+  - Main project: `Arduino/DarkroomDualTimer/DarkroomDualTimer.ino`
+  - Demo/test sketch: `Arduino/VIsForVictory/VIsForVictory.ino`
+
+---
+
+For assembly instructions, wiring diagrams, and additional images, see the `README.md`.

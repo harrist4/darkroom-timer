@@ -1,66 +1,92 @@
-# Darkroom Timer
 
-A simple, USB-powered stopwatch-style timer designed for darkroom print development. This project uses an Arduino Nano, TM1637 LED display, and tactile buttons to provide a clean interface with optional audible ticking. The case is custom-designed in FreeCAD and 3D printed.
+# Darkroom Dual Timer
 
-![Assembled Darkroom Timer](images/darkroom_timer_front.jpg)
+A USB-powered stopwatch + countdown timer designed for darkroom and general timing tasks.  
+Features a clear LED display, tactile button interface, audible feedback, and ultra-low sleep mode.
+
+![Assembled Darkroom Timer](images/darkroom_timers.jpg)
 
 ---
 
 ## Features
 
-- Large, easy-to-read 4-digit red LED display
-- Start, Stop, and Reset buttons
-- Optional ticking sound for each second
-- Long-press reset to power off the unit
-- USB-C power support with adapter separation from programming port
-- Simple display bezel and safelight-compatible red gel filter
+- Stopwatch and countdown timer modes
+- Long-press and chord-based controls
+- Sleep mode with wake-on-button
+- Audible ticks and alarm tones
+- USB-C PD power (via external module)
+- Clean UV-resin bezel, red optical gel
 
 ---
 
-## Build Overview
+## Modes
+### Global Controls
+- **Green + Black** — Enable ticking
+- **Red + Black** — Disable ticking
+- **Green + Red** — Toggle between Stopwatch and Countdown (Alarm) modes
+- **Red (D4, long press)** — Power off
 
-### Enclosure Assembly
-- The case includes internal bosses designed to match the size and shape of each board.
-- Components are held in place with small beads of **hot glue**, enough to prevent rattling without requiring mechanical fasteners.
-- The red gel filter is cut **after assembly** using scissors or a hobby knife to match the display opening.
-- Once cut, the gel is placed on the display, and the stepped bezel is installed.
-- The bezel is held in place using **thin beads of hot glue** at several points around the edge.
-- Any squeeze-out from glue can be gently peeled or trimmed for a clean finish.
+### Stopwatch Mode
+- **Green (D2)** — Start
+- **Red (D4)** — Stop
+- **Black (D3)** — Reset
 
-### Power
-- The USB-C power adapter module provides regulated 5V to the circuit.
-- This adapter is intentionally used **instead of the Arduino Nano's USB port**, so the device cannot be accidentally connected to a computer.
-- This allows the timer to be safely powered by nearly any USB-C source, including laptop power bricks, phone chargers, or computer USB ports.
-
-### Wiring
-- All wiring is point-to-point using flexible stranded hookup wire.
-- The TM1637 display module has two sets of 4 pads (CLK, DIO, GND, 5V). Either set may be used.
-- A recommended wiring pattern:
-  - **GND from display** connected in a daisy-chain to each of the three momentary switch grounds.
-  - **5V and GND from power board** go to display and Arduino.
-  - **CLK and DIO** from the display go to pins D2 and D3 on the Arduino.
-  - The buttons connect to pins D4 (Start), D5 (Stop), and D6 (Reset).
-  - The passive buzzer connects to D7.
-- All inputs use `INPUT_PULLUP` mode in the Arduino code, so switches should connect to **GND when pressed**.
+### Countdown Timer Mode
+- **Black (D3)** — Add 1 minute (tap), or rapid 5min increments (hold)
+- **Black (D3, long press)** — Reset to 00:00
+- **Green (D2)** — Start countdown
+- **Red (D4)** — Stop countdown
 
 ---
 
-## Usage
+## Wiring Summary
 
-- Press **Start** to begin the timer.
-- Press **Stop** to pause the timer.
-- Press **Reset** to zero the display.
-- **Start + Reset** enables ticking (a short beep each second).
-- **Stop + Reset** disables ticking.
-- **Hold Reset** for a long press (0.5s) to power off the display.
+| Arduino Pin | Function     | Notes                                              |
+|-------------|--------------|-----------------------------------------------------|
+| D2 *        | Green Button | Start / wake / tick toggle (INT0: wake from sleep) |
+| D3 *        | Black Button | Add time / reset timer (INT1: wake from sleep)     |
+| D4          | Red Button   | Stop / sleep / mode toggle                         |
+| D5          | Buzzer       | Passive buzzer tone output                         |
+| D6          | TM1637 CLK   | 4-digit display clock                              |
+| D7          | TM1637 DIO   | 4-digit display data                               |
+
+- Buttons are connected to GND and use `INPUT_PULLUP`
+- Buzzer connects to D5 and GND
+- Display uses TM1637 2-wire serial
+
+* Pins D2 and D3 are used for sleep wake interrupts INT0 and INT1
+
+---
+
+## Power
+
+- Powered via 5V USB-C trigger module
+- USB-C powers Nano and display via 5V/GND pins
+- Nano’s onboard USB port is unused
+- Ideal for portable, battery-backed use
+
+---
+
+## 3D Printed Case
+
+- STL files in `/3D/` folder
+  - Top: `darkroom-timer-Case Top.stl`
+  - Bottom: `darkroom-timer-Case Bottom.stl`
+  - Bezel: `darkroom-timer-Bezel.stl` (step-backed for UV resin)
+
+### Assembly Notes
+- Internal parts secured with hot glue (release with IPA)
+- Bezel glued with Bondic UV resin into side groove
+- Red lighting gel sits under bezel over LED display
 
 ---
 
 ## Files
 
-- `Arduino/darkroom_timer/darkroom_timer.ino` — main Arduino sketch
-- `3D/darkroom_timer.FCStd` — FreeCAD source file
-- `3D/*.stl` — exported STL files for printing case and bezel
+- `Arduino/DarkroomDualTimer/DarkroomDualTimer.ino`
+- `3D/*.stl` and FreeCAD source
+- `parts_list.md` with all required materials
 
-For the full parts list, see `parts_list.md`.
+---
 
+For parts, assembly tips, and adhesive guidance, see [`parts_list.md`](parts_list.md).
