@@ -12,7 +12,7 @@ This project uses commonly available components to build a USB-powered stopwatch
 - **TM1637 4-Digit Display Module** — 0.56" red LED with built-in serial driver
 - **Passive Buzzer** — 5V electromagnetic beeper (e.g., CYT1008)
 - **Momentary Push Buttons (x3)** — 19mm metal, SPST, momentary action, screw terminal (Red, Green, Black)
-- **USB-C Power Trigger Module** — Adjustable 5V output from USB-C PD supply (e.g., AITRIP 5A PD trigger)
+- **USB-C Power Trigger Module** — Converts power from a USB-C charger into a steady 5V output for the timer (e.g., AITRIP 5A USB-C PD trigger board)
 
 ---
 
