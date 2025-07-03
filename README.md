@@ -4,7 +4,7 @@
 A USB-powered stopwatch + countdown timer designed for darkroom and general timing tasks.  
 Features a clear LED display, tactile button interface, audible feedback, and ultra-low sleep mode.
 
-![Assembled Darkroom Timer](images/darkroom_timers.jpg)
+![Assembled Darkroom Timer](images/darkroom_timers.jpeg)
 
 ---
 
