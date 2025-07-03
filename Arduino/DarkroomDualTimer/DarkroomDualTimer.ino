@@ -16,23 +16,23 @@ const int EEPROM_ADDR_INIT     = 100;  // a safe location for our marker
 const byte EEPROM_MAGIC_VALUE = 0x42; // arbitrary non-zero value
 
 const int NUM_BUTTONS = 3;
-const int LONG_PRESS_THRESHOLD_MS = 500;
-const int CHORD_TIME_WINDOW_MS = 100;
+const unsigned long LONG_PRESS_THRESHOLD_MILLIS = 500UL;
+const unsigned long CHORD_TIME_WINDOW_MILLIS = 100UL;
 
-const unsigned long TICK_INTERVAL_MILLIS = 1000; // Timer tick every second
+const unsigned long TICK_INTERVAL_MILLIS = 1000UL; // Timer tick every second
 
-const int STOPWATCH_STOPPED_RESET_MILLIS = 30 * 1000; // Time after stop when timer resets automatically
-const unsigned long IDLE_SLEEP_TIMEOUT_MS = 5UL * 60UL * 1000UL; // 5 minutes
+const unsigned long STOPWATCH_STOPPED_RESET_MILLIS = 30UL * 1000UL; // Time after stop when timer resets automatically
+const unsigned long IDLE_SLEEP_TIMEOUT_MILLIS = 10UL * 60UL * 1000UL; // 10 minutes
 
-const int TIMER_ALARM_PULSE_MILLIS = 50;  // Duration of each beep in the alarm (ms)
-const int TIMER_ALARM_GAP_MILLIS = 50;    // Pause between beeps in alarm
-const int TIMER_ALARM_PULSE_COUNT = 3;    // Number of beeps in each alarm burst
-const int TIMER_ALARM_TONE = 1760;        // Frequency of the alarm tone in Hz
-const int TIMER_ALARM_MAX_SECONDS = 5;   // Alarm duration (after this, screen flashes silently)
+const unsigned long TIMER_ALARM_PULSE_MILLIS = 50UL;  // Duration of each beep in the alarm (ms)
+const unsigned long TIMER_ALARM_GAP_MILLIS = 50UL;    // Pause between beeps in alarm
+const uint8_t TIMER_ALARM_PULSE_COUNT = 3;    // Number of beeps in each alarm burst
+const unsigned int TIMER_ALARM_TONE_HZ = 1760;        // Frequency of the alarm tone in Hz
+const uint16_t TIMER_ALARM_MAX_SECONDS = 5;   // Alarm duration (after this, screen flashes silently)
 const bool TIMER_ALARM_DEBUG = false;     // If true, lets you test alarm manually at 00:00
-const unsigned long VLP_THRESHOLD_MS = 1200;  // 1.5 seconds
-const unsigned long FAST_INCREMENT_INTERVAL_MS = 200;  // Increment 4 times per second
-const int FAST_INCREMENT_MINUTES = 5; // 5 minutes per interval
+const unsigned long VLP_THRESHOLD_MILLIS = 1200UL;  // 1.5 seconds
+const unsigned long FAST_INCREMENT_INTERVAL_MILLIS = 200UL;  // Increment 4 times per second
+const uint8_t FAST_INCREMENT_MINUTES = 5; // 5 minutes per interval
 
 // === PINS ===
 // Using Green and Black on 2 and 3 to allow them to interrupt sleep
@@ -64,14 +64,14 @@ unsigned long lastInteractionMillis = 0;
 unsigned long stopwatchStartMillis = 0;          // Start time of current session
 unsigned long stopwatchLastDeltaSeconds = 0;     // Last second tracked for updates
 unsigned long stopwatchStopMillis = 0;           // Stop time of current session
-int stopwatchDisplaySeconds = 0;                 // Time currently displayed (in seconds)
+uint16_t stopwatchDisplaySeconds = 0;                 // Time currently displayed (in seconds)
 bool stopwatchRunning = false;
 
 // === Timer Variables ==
 unsigned long timerMillis = 0;  // Current countdown time in milliseconds
 unsigned long timerLastTick = 0;         // When the last second tick occurred
-unsigned int timerSetMinutes = 0;        // Time to count down from (set by user)
-unsigned int timerSetSeconds = 0;
+uint8_t timerSetMinutes = 0;        // Time to count down from (set by user)
+uint8_t timerSetSeconds = 0;
 bool timerColonOn = false;
 bool timerLastColonOn = false;
 bool blackVeryLongPressActive = false;
@@ -226,7 +226,8 @@ void loop() {
   // This has to happen after the "wake from sleep" logic so that
   // the lastInteractionMillis has been updated by the reset post-wake
   // to avoid some crazy can't wake up scenario.
-  bool shouldSleepForInactivity = (millis() - lastInteractionMillis > IDLE_SLEEP_TIMEOUT_MS);
+  bool shouldSleepForInactivity = (millis() - lastInteractionMillis > IDLE_SLEEP_TIMEOUT_MILLIS
+);
 
   // Handle global buttons
 
@@ -372,9 +373,9 @@ void stopwatchLoop(){
   }
 
   // Display time as MM:SS
-  int minutes = stopwatchDisplaySeconds / 60;
-  int seconds = stopwatchDisplaySeconds % 60;
-  int timeVal = minutes * 100 + seconds;
+  uint8_t minutes = stopwatchDisplaySeconds / 60;
+  uint8_t seconds = stopwatchDisplaySeconds % 60;
+  uint16_t timeVal = minutes * 100 + seconds;
   display.showNumberDecEx(timeVal, colonOn ? 0b01000000 : 0, true);
 }
 
@@ -402,10 +403,10 @@ void timerLoop(){
       unsigned long heldTime = millis() - buttons[BLACK]->pressedAt;
 
       // Sanity cap: if the device just woke from sleep, skip obviously stale times
-      if (buttons[BLACK]->pressedAt > 0 && heldTime > VLP_THRESHOLD_MS){
+      if (buttons[BLACK]->pressedAt > 0 && heldTime > VLP_THRESHOLD_MILLIS){
         blackVeryLongPressActive = true;
 
-        if (millis() - lastFastAddTime > FAST_INCREMENT_INTERVAL_MS) {
+        if (millis() - lastFastAddTime > FAST_INCREMENT_INTERVAL_MILLIS) {
           // Go backwards to trim off any unsightly minutes not on a multiple of FAST_INCREMENT_MINUTES
           timerSetMinutes = timerSetMinutes - timerSetMinutes%FAST_INCREMENT_MINUTES;
           // Now add FAST_INCREMENT_MINUTES minutes.
@@ -479,7 +480,7 @@ void timerLoop(){
           }
         }
         if (found && !timerAlarmToneOn) {
-          tone(BUZZER_PIN, TIMER_ALARM_TONE, TIMER_ALARM_PULSE_MILLIS);
+          tone(BUZZER_PIN, TIMER_ALARM_TONE_HZ, TIMER_ALARM_PULSE_MILLIS);
           timerAlarmToneOn = true;
         }
       }
@@ -617,8 +618,8 @@ void updateTimerDisplay() {
     }
   }
 
-  int minutes = 0;
-  int seconds = 0;
+  uint8_t minutes = 0;
+  uint8_t seconds = 0;
 
   if (countdownState == SETUP) {
     minutes = timerSetMinutes;
@@ -670,7 +671,7 @@ void resolveEventsIfReady() {
     for (int i = 0; i < NUM_BUTTONS; i++) {
       if (!buttons[i]->wasHandled && buttons[i]->pressedAt > 0) {
         if (buttons[i]->isPressed) {
-          if(millis() - buttons[i]->pressedAt > LONG_PRESS_THRESHOLD_MS){
+          if(millis() - buttons[i]->pressedAt > LONG_PRESS_THRESHOLD_MILLIS){
             // Currently we only want the "long press click" to happen for black
             if(i == BLACK){
               quietTick();
@@ -697,7 +698,7 @@ void resolveEventsIfReady() {
   longPressTickPlayed = false;
 
   int involved[NUM_BUTTONS];
-  int count = 0;
+  uint8_t count = 0;
   for (int i = 0; i < NUM_BUTTONS; i++) {
     if (!buttons[i]->wasHandled && buttons[i]->pressedAt > 0 && !buttons[i]->isPressed) {
       involved[count++] = i;
@@ -730,9 +731,9 @@ void resolveEventsIfReady() {
     if (duration > longest) longest = duration;
   }
 
-  bool isLong = longest >= LONG_PRESS_THRESHOLD_MS;
-  bool isVeryLong = longest >= VLP_THRESHOLD_MS;
-  bool isChord = (last - first) <= CHORD_TIME_WINDOW_MS && count > 1;
+  bool isLong = longest >= LONG_PRESS_THRESHOLD_MILLIS;
+  bool isVeryLong = longest >= VLP_THRESHOLD_MILLIS;
+  bool isChord = (last - first) <= CHORD_TIME_WINDOW_MILLIS && count > 1;
 
   if (isChord) {
     recordChordEvent(involved, count, isLong);

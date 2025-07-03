@@ -87,6 +87,30 @@ Features a clear LED display, tactile button interface, audible feedback, and ul
 - `3D/*.stl` and FreeCAD source
 - `parts_list.md` with all required materials
 
+### Required Arduino Libraries
+
+This project depends on two Arduino libraries:
+
+- **TM1637Display** by Avishorp — for driving the 4-digit LED display
+- **ezButton** by ArduinoGetStarted — for reliable button press handling and debouncing
+
+To install these libraries:
+
+1. Open the Arduino IDE
+2. Go to **Sketch → Include Library → Manage Libraries...**
+3. In the Library Manager:
+   - Search for **“TM1637Display”** and click **Install**
+   - Search for **“ezButton”** and click **Install**
+
+Alternatively, if you're using the Arduino CLI:
+
+```bash
+arduino-cli lib install "TM1637Display"
+arduino-cli lib install "ezButton"
+```
+
+Make sure these libraries are available in your environment before compiling the sketch.
+
 ---
 
 For parts, assembly tips, and adhesive guidance, see [`parts_list.md`](parts_list.md).
