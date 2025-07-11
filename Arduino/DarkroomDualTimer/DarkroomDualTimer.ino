@@ -22,7 +22,7 @@ const unsigned long CHORD_TIME_WINDOW_MILLIS = 100UL;
 const unsigned long TICK_INTERVAL_MILLIS = 1000UL; // Timer tick every second
 
 const unsigned long STOPWATCH_STOPPED_RESET_MILLIS = 30UL * 1000UL; // Time after stop when timer resets automatically
-const unsigned long IDLE_SLEEP_TIMEOUT_MILLIS = 10UL * 60UL * 1000UL; // 10 minutes
+const unsigned long IDLE_SLEEP_TIMEOUT_MILLIS = 30UL * 60UL * 1000UL; // 30 minutes
 
 const unsigned long TIMER_ALARM_PULSE_MILLIS = 50UL;  // Duration of each beep in the alarm (ms)
 const unsigned long TIMER_ALARM_GAP_MILLIS = 50UL;    // Pause between beeps in alarm
@@ -72,10 +72,13 @@ unsigned long timerMillis = 0;  // Current countdown time in milliseconds
 unsigned long timerLastTick = 0;         // When the last second tick occurred
 uint8_t timerSetMinutes = 0;        // Time to count down from (set by user)
 uint8_t timerSetSeconds = 0;
+uint8_t timerLastSetMinutes = 0;        // Time to count down from (set by user)
+uint8_t timerLastSetSeconds = 0;
 bool timerColonOn = false;
 bool timerLastColonOn = false;
 bool blackVeryLongPressActive = false;
 unsigned long lastFastAddTime = 0;
+bool minuteTonePlayed = false;
 
 // Alarm State
 bool timerAlarmActive = false;   // Is the alarm currently sounding?
@@ -226,8 +229,7 @@ void loop() {
   // This has to happen after the "wake from sleep" logic so that
   // the lastInteractionMillis has been updated by the reset post-wake
   // to avoid some crazy can't wake up scenario.
-  bool shouldSleepForInactivity = (millis() - lastInteractionMillis > IDLE_SLEEP_TIMEOUT_MILLIS
-);
+  bool shouldSleepForInactivity = (millis() - lastInteractionMillis > IDLE_SLEEP_TIMEOUT_MILLIS);
 
   // Handle global buttons
 
@@ -333,6 +335,7 @@ void stopwatchLoop(){
     bool wasRunning = stopwatchRunning;
     doResetStopwatch();
     if(wasRunning){
+      playShortTone();
       stopwatchStartMillis = millis();
       stopwatchRunning = true;
     }
@@ -344,6 +347,7 @@ void stopwatchLoop(){
     }
   }else{
     if(pressEvents.greenShortPress){
+      minuteTonePlayed = true;
       stopwatchStartMillis = millis();
       stopwatchLastDeltaSeconds = 0;
       stopwatchRunning = true;
@@ -375,6 +379,17 @@ void stopwatchLoop(){
   // Display time as MM:SS
   uint8_t minutes = stopwatchDisplaySeconds / 60;
   uint8_t seconds = stopwatchDisplaySeconds % 60;
+  if(stopwatchRunning){
+    if(minutes > 0 && seconds == 0){
+      if(!minuteTonePlayed){
+        playMinuteTone();
+        minuteTonePlayed = true;
+      }
+    }else{
+      minuteTonePlayed = false;
+    }
+  }
+
   uint16_t timeVal = minutes * 100 + seconds;
   display.showNumberDecEx(timeVal, colonOn ? 0b01000000 : 0, true);
 }
@@ -456,7 +471,10 @@ void timerLoop(){
       updateTimerDisplay();
     } else {
       countdownState = ALARM;
+      timerSetMinutes = timerLastSetMinutes;
+      timerSetSeconds = timerLastSetSeconds;
       startTimerAlarm();
+      updateTimerDisplay();
     }
   }
 
@@ -509,6 +527,10 @@ void doResetTimer(){
   // Reset other stuff
   timerSetMinutes = 0;
   timerSetSeconds = 0;
+  timerLastSetMinutes = 0;
+  timerLastSetSeconds = 0;
+  // timerSetMinutes = timerLastSetMinutes;
+  // timerSetSeconds = timerLastSetSeconds;
   timerMillis = 0;
   timerAlarmActive = false;
   countdownState = SETUP;
@@ -522,15 +544,29 @@ void handleTimerButtons() {
 
   // === GREEN button: Start, Resume, or Trigger Alarm in DEBUG mode ===
   if (pressEvents.greenShortPress) {
+    // No matter what, avoid playing the minute tone right away
+    minuteTonePlayed = true;
+
+    // If timer is in ALARM, stop alarm and use last time if possible
+    if (countdownState == ALARM){
+      stopTimerAlarm();
+      timerSetMinutes = timerLastSetMinutes;
+      timerSetSeconds = timerLastSetSeconds;
+      countdownState = SETUP;
+    }
+    // If timer says zero in SETUP, use last time if possible
+    if(countdownState == SETUP && (timerSetMinutes == 0) && (timerSetSeconds == 0)){
+      timerSetMinutes = timerLastSetMinutes;
+      timerSetSeconds = timerLastSetSeconds;
+    }
     if (countdownState == SETUP && (timerSetMinutes > 0 || timerSetSeconds > 0)) {
       timerMillis = (timerSetMinutes * 60UL + timerSetSeconds) * 1000UL;
       timerLastTick = millis();
       countdownState = RUNNING;
+      timerLastSetMinutes = timerSetMinutes;
       timerSetMinutes = 0;
+      timerLastSetSeconds = timerSetSeconds;
       timerSetSeconds = 0;
-    } else if (countdownState == SETUP && timerSetMinutes == 0 && timerSetSeconds == 0 && TIMER_ALARM_DEBUG) {
-      countdownState = ALARM;
-      startTimerAlarm();
     } else if (countdownState == PAUSED) {
       countdownState = RUNNING;
       timerLastTick = millis();
@@ -538,31 +574,53 @@ void handleTimerButtons() {
   }
 
   if (pressEvents.blackShortPress) {
-    if (countdownState == OFF) {
-      countdownState = SETUP;
-      timerSetMinutes = 1;
-      timerSetSeconds = 0;
-      updateTimerDisplay();
-    } else if (countdownState == SETUP) {
-      timerSetMinutes = (timerSetMinutes + 1) % 100;
-      timerSetSeconds = 0;
-      updateTimerDisplay();
-    } else if (countdownState == PAUSED) {
-      timerMillis = 0;
-      countdownState = SETUP;
-      updateTimerDisplay();
+    switch(countdownState){
+      case OFF:
+        countdownState = SETUP;
+        timerSetMinutes = 1;
+        timerSetSeconds = 0;
+        updateTimerDisplay();
+        break;
+      case SETUP:
+        timerSetMinutes = (timerSetMinutes + 1) % 100;
+        timerSetSeconds = 0;
+        updateTimerDisplay();
+        break;
+      case PAUSED:
+        timerMillis = 0;
+        countdownState = SETUP;
+        timerSetMinutes = timerLastSetMinutes;
+        timerSetSeconds = timerLastSetSeconds;
+        updateTimerDisplay();
+        break;
+      case RUNNING:
+        // Add a minute to running timer
+        playShortTone();
+        timerMillis += 60UL * 1000UL;
+        break;
+      case ALARM:
+        stopTimerAlarm();
+        countdownState = SETUP;
+        timerMillis = 0;
+        timerSetMinutes = (timerSetMinutes + 1) % 100;
+        timerSetSeconds = 0;
+        updateTimerDisplay();   
+        break;
     }
   }
 
   if (pressEvents.blackLongPress) {
-    if (countdownState == SETUP) {
-      timerSetMinutes = 0;
-      timerSetSeconds = 0;
-      updateTimerDisplay();
-    } else if (countdownState == PAUSED) {
-      timerMillis = 0;
-      countdownState = SETUP;
-      updateTimerDisplay();
+    switch(countdownState) {
+      case SETUP:
+        timerSetMinutes = 0;
+        timerSetSeconds = 0;
+        updateTimerDisplay();
+        break;
+      case PAUSED:
+        timerMillis = 0;
+        countdownState = SETUP;
+        updateTimerDisplay();
+        break;
     }    
   }
 
@@ -621,13 +679,24 @@ void updateTimerDisplay() {
   uint8_t minutes = 0;
   uint8_t seconds = 0;
 
-  if (countdownState == SETUP) {
+  if (countdownState == SETUP || countdownState == ALARM) {
     minutes = timerSetMinutes;
     seconds = timerSetSeconds;
   } else {
     unsigned long timeLeft = timerMillis / 1000;
     minutes = timeLeft / 60;
     seconds = timeLeft % 60;
+  }
+
+  if(countdownState == RUNNING){
+    if(minutes > 0 && seconds == 0){
+      if(!minuteTonePlayed){
+        playMinuteTone();
+        minuteTonePlayed = true;
+      }
+    }else{
+      minuteTonePlayed = false;
+    }
   }
 
   uint8_t colon = timerColonOn ? 0b01000000 : 0;
@@ -811,6 +880,20 @@ void playQuietDoubleClick() {
   delay(80);
   tone(BUZZER_PIN, 900, 40);
   delay(100);
+}
+
+void playShortTone(){
+  tone(BUZZER_PIN, 7040, 25);  // A
+  delay(25);
+  noTone(BUZZER_PIN);
+}
+
+void playMinuteTone(){
+  if(tickEnabled){
+    tone(BUZZER_PIN, 880, 25);  // E
+    delay(25);
+    noTone(BUZZER_PIN);
+  }
 }
 
 // --- Enable ticking with triad tone ---
